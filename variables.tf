@@ -24,19 +24,19 @@ variable "sw_version" {
 
 variable "region_name" {
   description = "Region name"
-  default     = "us-east-1"
+  default     = "us-east-2"
   type        = string
 }
 
 variable "instance_type" {
   description = "Instance type"
-  default     = "t2.micro"
+  default     = "c4.xlarge"
   type        = string
 }
 
 variable "gen_instance_type" {
   description = "Generator node instance type"
-  default     = "t2.micro"
+  default     = "c4.xlarge"
   type        = string
 }
 
@@ -83,9 +83,15 @@ variable "ssh_private_key" {
 }
 
 variable "subnet_ids" {
-  description = "List of subnets to launch the instances in. Example: ['subnet-12345','subnet-98765']."
+  description = "List of subnets to launch the instances in"
   default     = [""]
   type        = list(string)
+}
+
+variable "vpc_id" {
+  description = "VPC Id"
+  default     = ""
+  type        = string
 }
 
 variable "security_group_ids" {
