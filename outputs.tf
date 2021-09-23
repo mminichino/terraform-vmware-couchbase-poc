@@ -1,3 +1,7 @@
+output lab-id {
+    value = "${lookup(aws_instance.couchbase_nodes[0].tags, "LabName")}"
+}
+
 output "db-node-ips" {
   value = [
     for instance in aws_instance.couchbase_nodes:
