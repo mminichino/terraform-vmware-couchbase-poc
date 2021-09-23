@@ -35,6 +35,10 @@ data "aws_ami" "couchbase_ami" {
   }
 }
 
+resource "random_id" "labid" {
+  byte_length = 4
+}
+
 resource "aws_instance" "couchbase_nodes" {
   count                  = var.num_instances
   ami                    = data.aws_ami.couchbase_ami.id
@@ -50,8 +54,9 @@ resource "aws_instance" "couchbase_nodes" {
   }
 
   tags = {
-    Name = "${var.host_name_prefix}${format("%02d", count.index + var.start_num)}"
+    Name = "${var.host_name_prefix}-${random_id.labid.hex}-${format("%02d", count.index + var.start_num)}"
     Role = "${var.host_name_prefix}"
+    LabName = "lab-${random_id.labid.hex}"
   }
 
   provisioner "file" {
@@ -94,8 +99,9 @@ resource "aws_instance" "generator_nodes" {
   }
 
   tags = {
-    Name = "${var.gen_name_prefix}${format("%02d", count.index + var.gen_start_num)}"
+    Name = "${var.gen_name_prefix}-${random_id.labid.hex}-${format("%02d", count.index + var.gen_start_num)}"
     Role = "${var.gen_name_prefix}"
+    LabName = "lab-${random_id.labid.hex}"
   }
 
   provisioner "file" {
@@ -131,6 +137,7 @@ resource "aws_lb" "load_balancer" {
   tags = {
     Name = "${var.host_name_prefix}-lb"
     Role = "${var.host_name_prefix}"
+    LabName = "lab-${random_id.labid.hex}"
   }
 }
 
@@ -179,6 +186,7 @@ resource "aws_lb_target_group" "tg_http" {
   tags = {
     Name = "${var.host_name_prefix}-tg-http"
     Role = "${var.host_name_prefix}"
+    LabName = "lab-${random_id.labid.hex}"
   }
 }
 
@@ -205,6 +213,7 @@ resource "aws_lb_target_group" "tg_https" {
   tags = {
     Name = "${var.host_name_prefix}-tg-https"
     Role = "${var.host_name_prefix}"
+    LabName = "lab-${random_id.labid.hex}"
   }
 }
 
