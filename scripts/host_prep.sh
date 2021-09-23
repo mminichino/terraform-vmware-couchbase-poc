@@ -15,6 +15,24 @@ sudo cp ~/.ssh/authorized_keys ~admin/.ssh/authorized_keys
 sudo chmod 600 ~admin/.ssh/authorized_keys
 sudo chown admin:admin ~admin/.ssh/authorized_keys
 
+echo "Setup DNS and Host Name."
+sudo nmcli c m System\ eth0 ipv4.ignore-auto-dns yes
+sudo nmcli c m System\ eth0 ipv4.dns "10.18.1.208,10.18.1.176"
+sudo nmcli c m System\ eth0 ipv4.dns-search "perflab.local"
+sudo nmcli connection up System\ eth0
+
+sudo bash -c 'cat <<EOF > /etc/resolv.conf
+search perflab.local
+nameserver 10.18.1.208
+nameserver 10.18.1.176
+EOF'
+
+sudo hostnamectl set-hostname $HOSTNAME
+
+IP_ADDRESS=$(nmcli c s System\ eth0 | grep "IP4.ADDRESS" | awk '{print $2}' | sed -e 's/\/.*$//')
+
+sudo sh -c "echo \"$IP_ADDRESS $HOSTNAME\" >> /etc/hosts"
+
 echo "Disabling THP."
 
 sudo bash -c 'cat <<EOF > /etc/init.d/disable-thp
