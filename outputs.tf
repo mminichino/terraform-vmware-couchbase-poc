@@ -1,5 +1,5 @@
 output lab-id {
-    value = "${lookup(aws_instance.couchbase_nodes[0].tags, "LabName")}"
+    value = "lab-${random_id.labid.hex}"
 }
 
 output "db-node-ips" {

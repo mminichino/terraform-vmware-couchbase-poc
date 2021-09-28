@@ -10,9 +10,15 @@ variable "host_name_prefix" {
   type        = string
 }
 
-variable "gen_name_prefix" {
+variable "domain_name" {
   description = "Prefix for generator nodes"
-  default     = "perfgen"
+  default     = ""
+  type        = string
+}
+
+variable "dns_server" {
+  description = "Prefix for generator nodes"
+  default     = ""
   type        = string
 }
 
@@ -82,10 +88,10 @@ variable "ssh_private_key" {
   type        = string
 }
 
-variable "subnet_ids" {
-  description = "List of subnets to launch the instances in"
-  default     = [""]
-  type        = list(string)
+variable "subnet_id" {
+  description = "Subnet to launch the instances in"
+  default     = ""
+  type        = string
 }
 
 variable "vpc_id" {

@@ -40,12 +40,13 @@ resource "random_id" "labid" {
 }
 
 resource "aws_instance" "couchbase_nodes" {
-  count                  = var.num_instances
+#  count                  = var.num_instances
+  for_each               = var.cluster_spec
   ami                    = data.aws_ami.couchbase_ami.id
-  instance_type          = var.instance_type
+  instance_type          = each.value.instance_type
   key_name               = var.ssh_key
   vpc_security_group_ids = var.security_group_ids
-  subnet_id              = element(var.subnet_ids, count.index)
+  subnet_id              = var.subnet_id
 
   root_block_device {
     volume_size = var.root_volume_size
@@ -54,8 +55,9 @@ resource "aws_instance" "couchbase_nodes" {
   }
 
   tags = {
-    Name = "${var.host_name_prefix}-${random_id.labid.hex}-${format("%02d", count.index + var.start_num)}"
-    Role = "database"
+    Name = "${each.key}-${random_id.labid.hex}"
+    Role = "${each.value.node_role}"
+    Services = "${each.value.node_services}"
     LabName = "lab-${random_id.labid.hex}"
   }
 
@@ -85,12 +87,13 @@ resource "aws_instance" "couchbase_nodes" {
 }
 
 resource "aws_instance" "generator_nodes" {
-  count                  = var.gen_instances
+#  count                  = var.gen_instances
+  for_each               = var.generator_spec
   ami                    = data.aws_ami.couchbase_ami.id
-  instance_type          = var.gen_instance_type
+  instance_type          = each.value.instance_type
   key_name               = var.ssh_key
   vpc_security_group_ids = var.security_group_ids
-  subnet_id              = element(var.subnet_ids, count.index)
+  subnet_id              = var.subnet_id
 
   root_block_device {
     volume_size = var.root_volume_size
@@ -99,8 +102,9 @@ resource "aws_instance" "generator_nodes" {
   }
 
   tags = {
-    Name = "${var.gen_name_prefix}-${random_id.labid.hex}-${format("%02d", count.index + var.gen_start_num)}"
-    Role = "generator"
+    Name = "${each.key}-${random_id.labid.hex}"
+    Role = "${each.value.node_role}"
+    Services = "${each.value.node_services}"
     LabName = "lab-${random_id.labid.hex}"
   }
 
@@ -132,7 +136,7 @@ resource "aws_instance" "generator_nodes" {
 resource "aws_lb" "load_balancer" {
   name               = "${var.host_name_prefix}-lb"
   load_balancer_type = "network"
-  subnets            = var.subnet_ids
+  subnets            = [var.subnet_id]
 
   tags = {
     Name = "${var.host_name_prefix}-lb"
@@ -218,15 +222,27 @@ resource "aws_lb_target_group" "tg_https" {
 }
 
 resource "aws_lb_target_group_attachment" "tga_http" {
-  count            = length(aws_instance.couchbase_nodes)
+#  count            = length(aws_instance.couchbase_nodes)
+  for_each         = var.cluster_spec
   target_group_arn = aws_lb_target_group.tg_http.arn
   port             = 8091
-  target_id        = aws_instance.couchbase_nodes[count.index].id
+  target_id        = aws_instance.couchbase_nodes[each.key].id
 }
 
 resource "aws_lb_target_group_attachment" "tga_https" {
-  count            = length(aws_instance.couchbase_nodes)
+#  count            = length(aws_instance.couchbase_nodes)
+  for_each         = var.cluster_spec
   target_group_arn = aws_lb_target_group.tg_https.arn
   port             = 18091
-  target_id        = aws_instance.couchbase_nodes[count.index].id
+  target_id        = aws_instance.couchbase_nodes[each.key].id
+}
+
+resource "null_resource" "prep-hosts" {
+  provisioner "local-exec" {
+    command = "${path.module}/scripts/awsrun.sh ansible-helper.py prep-db-host.yaml -S -h inventory.py --dnsonly true --user_name centos --domain ${var.domain_name} --dnsserver ${var.dns_server}"
+    environment = {
+       LAB_ID = "lab-${random_id.labid.hex}"
+    }
+  }
+  depends_on = [aws_instance.couchbase_nodes, aws_instance.generator_nodes]
 }
