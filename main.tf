@@ -249,7 +249,7 @@ resource "null_resource" "prep-hosts" {
 
 resource "null_resource" "couchbase-init" {
   provisioner "local-exec" {
-    command = "${path.module}/scripts/awsrun.sh ansible-helper.py couchbase-init.yaml -S -h inventory.py --memopt ${var.index_memory}"
+    command = "${path.module}/scripts/awsrun.sh ansible-helper.py couchbase-init.yaml -S -h inventory.py --memopt ${var.index_memory} --domain ${var.domain_name}"
     environment = {
        LAB_ID = "lab-${random_id.labid.hex}"
     }
