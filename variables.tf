@@ -11,13 +11,13 @@ variable "host_name_prefix" {
 }
 
 variable "domain_name" {
-  description = "Prefix for generator nodes"
+  description = "Environment domain name"
   default     = ""
   type        = string
 }
 
 variable "dns_server" {
-  description = "Prefix for generator nodes"
+  description = "Environment DNS server"
   default     = ""
   type        = string
 }
@@ -43,6 +43,12 @@ variable "instance_type" {
 variable "gen_instance_type" {
   description = "Generator node instance type"
   default     = "c4.xlarge"
+  type        = string
+}
+
+variable "index_memory" {
+  description = "Index storage setting"
+  default     = "false"
   type        = string
 }
 

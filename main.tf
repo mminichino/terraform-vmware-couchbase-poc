@@ -246,3 +246,13 @@ resource "null_resource" "prep-hosts" {
   }
   depends_on = [aws_instance.couchbase_nodes, aws_instance.generator_nodes]
 }
+
+resource "null_resource" "couchbase-init" {
+  provisioner "local-exec" {
+    command = "${path.module}/scripts/awsrun.sh ansible-helper.py couchbase-init.yaml -S -h inventory.py --memopt ${var.index_memory}"
+    environment = {
+       LAB_ID = "lab-${random_id.labid.hex}"
+    }
+  }
+  depends_on = [aws_instance.couchbase_nodes, aws_instance.generator_nodes, null_resource.prep-hosts]
+}

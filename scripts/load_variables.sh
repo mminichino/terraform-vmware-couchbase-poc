@@ -117,6 +117,20 @@ else
 fi
 }
 
+function get_index_mem {
+local -n return_value=$1
+
+echo "1) default"
+echo "2) memopt"
+echo -n "index_memory [1]: "
+read INPUT
+if [ -z "$INPUT" -o "$INPUT" -eq 1 ]; then
+  index_memory="false"
+else
+  index_memory="true"
+fi
+}
+
 host_name_prefix="perfdb"
 gen_name_prefix="perfgen"
 domain_name=""
@@ -125,6 +139,7 @@ sw_version="7.0.1-6102"
 region_name="us-east-2"
 instance_type="c4.xlarge"
 gen_instance_type="c4.xlarge"
+index_memory="false"
 num_instances="3"
 gen_instances="1"
 start_num="1"
@@ -208,6 +223,9 @@ read INPUT
 if [ -n "$INPUT" ]; then
    gen_instance_type=$INPUT
 fi
+
+get_index_mem index_memory
+
 echo -n "num_instances [$num_instances]: "
 read INPUT
 if [ -n "$INPUT" ]; then
@@ -276,6 +294,7 @@ echo "sw_version         : $sw_version"
 echo "region_name        : $region_name"
 echo "instance_type      : $instance_type"
 echo "gen_instance_type  : $gen_instance_type"
+echo "index_memory       : $index_memory"
 echo "num_instances      : $num_instances"
 echo "gen_instances      : $gen_instances"
 echo "start_num          : $start_num"
@@ -307,6 +326,7 @@ sed -e "s/\bHOST_NAME_PREFIX\b/$host_name_prefix/" \
     -e "s/\bREGION_NAME\b/$region_name/" \
     -e "s/\bINSTANCE_TYPE\b/$instance_type/" \
     -e "s/\bGEN_INSTANCE_TYPE\b/$gen_instance_type/" \
+    -e "s/\bINDEX_MEMORY\b/$index_memory/" \
     -e "s/\bNUM_INSTANCES\b/$num_instances/" \
     -e "s/\bGEN_INSTANCES\b/$gen_instances/" \
     -e "s/\bSTART_NUM\b/$start_num/" \
