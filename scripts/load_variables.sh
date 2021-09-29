@@ -124,7 +124,8 @@ echo "1) default"
 echo "2) memopt"
 echo -n "index_memory [1]: "
 read INPUT
-if [ -z "$INPUT" -o "$INPUT" -eq 1 ]; then
+[ -z "$INPUT" ] && INPUT=1
+if [ "$INPUT" -eq 1 ]; then
   index_memory="false"
 else
   index_memory="true"
@@ -373,7 +374,7 @@ for i in $(seq $num_instances); do
   list_item=1
   for service in data index query fts analytics eventing
   do
-    if [ "$service" == "data" ]; then
+    if [ "$service" == "data" -o "$service" == "index" -o "$service" == "query" ]; then
       default_answer="y"
     else
       default_answer="n"
