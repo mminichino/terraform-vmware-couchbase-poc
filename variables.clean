@@ -96,7 +96,7 @@ variable "gen_instances" {
 }
 
 variable "ssh_user" {
-  description = "The default username for the AMI"
+  description = "The default username for setup"
   type        = string
   default     = "admin"
 }

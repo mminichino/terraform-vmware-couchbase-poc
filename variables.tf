@@ -6,13 +6,13 @@
 
 variable "domain_name" {
   description = "Environment domain name"
-  default     = "unix.us.com"
+  default     = ""
   type        = string
 }
 
 variable "dns_server" {
   description = "Environment DNS server"
-  default     = "172.16.1.10"
+  default     = ""
   type        = string
 }
 
@@ -23,47 +23,47 @@ variable "sw_version" {
 }
 
 variable "vsphere_user" {
-  default     = "administrator@unix.us.com"
+  default     = "administrator@vsphere.local"
   type        = string
 }
 
 variable "vsphere_password" {
-  default     = "Passw0rd!"
+  default     = ""
   type        = string
 }
 
 variable "vsphere_server" {
-  default     = "172.16.1.19"
+  default     = ""
   type        = string
 }
 
 variable "vsphere_datacenter" {
-  default     = "HomeLab"
+  default     = ""
   type        = string
 }
 
 variable "vsphere_cluster" {
-  default     = "HomeLab"
+  default     = ""
   type        = string
 }
 
 variable "vsphere_datastore" {
-  default     = "vsanDatastore"
+  default     = ""
   type        = string
 }
 
 variable "vsphere_dvs_switch" {
-  default     = "DSwitch-10GbE"
+  default     = ""
   type        = string
 }
 
 variable "vsphere_network" {
-  default     = "lab-vpc-02"
+  default     = ""
   type        = string
 }
 
 variable "vsphere_template" {
-  default     = "CentOS-7-Template"
+  default     = ""
   type        = string
 }
 
@@ -103,7 +103,7 @@ variable "ssh_user" {
 
 variable "ssh_private_key" {
   description = "The private key to use when connecting to the instances"
-  default     = "/home/admin/.ssh/homelab-default-key"
+  default     = "/home/admin/.ssh/default.pem"
   type        = string
 }
 
