@@ -1,11 +1,11 @@
 #!/bin/sh
 #
 
-function list_ssh_keys {
+function list_dc {
 local result_array=()
 local -n return_value=$1
 
-for item in $(aws ec2 describe-key-pairs | jq -r '.KeyPairs[] | .KeyPairId + ":" + .KeyName'); do
+for item in $(ansible-helper.py vmware-get-info.yaml -j --vmware_host $vsphere_server --vmware_user $vsphere_user --vsphere_password $vsphere_password --getdc true 2>/dev/null | jq -r ".plays[] | .tasks[] | .hosts.localhost | select(.vmware_datacenters) | .vmware_datacenters[]"); do
     result_array+=("$item")
 done
 
@@ -16,14 +16,14 @@ done
 echo -n "Selection: "
 read INPUT
 
-return_value=$(echo ${result_array[$INPUT]} | cut -d: -f2)
+return_value=${result_array[$INPUT]}
 }
 
-function list_subnets {
+function list_cluster {
 local result_array=()
 local -n return_value=$1
 
-for item in $(aws ec2 describe-subnets | jq -r ".Subnets[] | select( .VpcId == \"$vpc_id\" ) | .SubnetId + \":\" + .CidrBlock + \":\" + (.Tags // [] | map(select(.Key == \"Name\") | .Value) | join(\":\"))"); do
+for item in $(ansible-helper.py vmware-get-info.yaml -j --vmware_host $vsphere_server --vmware_user $vsphere_user --vsphere_password $vsphere_password --vmware_dc $vsphere_datacenter --getcl true 2>/dev/null | jq -r ".plays[] | .tasks[] | .hosts.localhost | select(.vmware_clusters) | .vmware_clusters[]"); do
     result_array+=("$item")
 done
 
@@ -34,14 +34,14 @@ done
 echo -n "Selection: "
 read INPUT
 
-return_value=$(echo ${result_array[$INPUT]} | cut -d: -f1)
+return_value=${result_array[$INPUT]}
 }
 
-function list_vpc {
+function list_datastore {
 local result_array=()
 local -n return_value=$1
 
-for item in $(aws ec2 describe-vpcs | jq -r '.Vpcs[] | .VpcId + ":" + .CidrBlock + ":" + (.Tags // [] | map(select(.Key == "Name") | .Value) | join(";"))'); do
+for item in $(ansible-helper.py vmware-get-info.yaml -j --vmware_host $vsphere_server --vmware_user $vsphere_user --vsphere_password $vsphere_password --vmware_dc $vsphere_datacenter --getds true 2>/dev/null | jq -r ".plays[] | .tasks[] | .hosts.localhost | select(.vmware_datastores) | .vmware_datastores[]"); do
     result_array+=("$item")
 done
 
@@ -52,14 +52,14 @@ done
 echo -n "Selection: "
 read INPUT
 
-return_value=$(echo ${result_array[$INPUT]} | cut -d: -f1)
+return_value=${result_array[$INPUT]}
 }
 
-function list_sg {
+function list_dvs {
 local result_array=()
 local -n return_value=$1
 
-for item in $(aws ec2 describe-security-groups | jq -r ".SecurityGroups[] | select( .VpcId == \"$vpc_id\" ) | .GroupId + \":\" + .GroupName" | sed -e 's/ /_/g'); do
+for item in $(ansible-helper.py vmware-get-info.yaml -j --vmware_host $vsphere_server --vmware_user $vsphere_user --vsphere_password $vsphere_password --vmware_dc $vsphere_datacenter --getdvs true 2>/dev/null | jq -r ".plays[] | .tasks[] | .hosts.localhost | select(.vmware_dvs) | .vmware_dvs[]"); do
     result_array+=("$item")
 done
 
@@ -70,14 +70,50 @@ done
 echo -n "Selection: "
 read INPUT
 
-return_value=$(echo ${result_array[$INPUT]} | cut -d: -f1)
+return_value=${result_array[$INPUT]}
+}
+
+function list_pg {
+local result_array=()
+local -n return_value=$1
+
+for item in $(ansible-helper.py vmware-get-info.yaml -j --vmware_host $vsphere_server --vmware_user $vsphere_user --vsphere_password $vsphere_password --vmware_dc $vsphere_datacenter --vmware_dvs $vsphere_dvs_switch --getpg true 2>/dev/null | jq -r ".plays[] | .tasks[] | .hosts.localhost | select(.vmware_pg) | .vmware_pg[]"); do
+    result_array+=("$item")
+done
+
+for (( i=0; i<${#result_array[@]}; i++ )); do
+    echo "$i) ${result_array[$i]}"
+done
+
+echo -n "Selection: "
+read INPUT
+
+return_value=${result_array[$INPUT]}
+}
+
+function list_template {
+local result_array=()
+local -n return_value=$1
+
+for item in $(ansible-helper.py vmware-get-info.yaml -j --vmware_host $vsphere_server --vmware_user $vsphere_user --vsphere_password $vsphere_password --vmware_dc $vsphere_datacenter --gettmpl true 2>/dev/null | jq -r ".plays[] | .tasks[] | .hosts.localhost | select(.vmware_template) | .vmware_template[]"); do
+    result_array+=("$item")
+done
+
+for (( i=0; i<${#result_array[@]}; i++ )); do
+    echo "$i) ${result_array[$i]}"
+done
+
+echo -n "Selection: "
+read INPUT
+
+return_value=${result_array[$INPUT]}
 }
 
 function list_priv_keys {
 local result_array=()
 local -n return_value=$1
 
-for item in $(ls -l -I "*.pub" /home/admin/.ssh/id* /home/admin/.ssh/*.pem | awk '{print $NF}'); do
+for item in $(ls -I "*.pub" -I config -I known_hosts -I authorized_keys /home/admin/.ssh/ | awk '{print "/home/admin/.ssh/"$NF}'); do
     result_array+=("$item")
 done
 
@@ -132,10 +168,38 @@ else
 fi
 }
 
-host_name_prefix="perfdb"
-gen_name_prefix="perfgen"
+function get_cb_version {
+local -n return_value=$1
+local PACKAGES=$(curl -s http://packages.couchbase.com/releases/couchbase-server/enterprise/rpm/7/x86_64/repodata/repomd.xml | grep filelists.xml | cut -d\" -f2)
+
+for item in $(curl -s http://packages.couchbase.com/releases/couchbase-server/enterprise/rpm/7/x86_64/$PACKAGES | zcat | grep ver= | awk -F\" '{print $4"-"$6}' | tac | head -10); do
+    result_array+=("$item")
+done
+
+for (( i=0; i<${#result_array[@]}; i++ )); do
+    echo "$i) ${result_array[$i]}"
+done
+
+echo -n "Selection: "
+read INPUT
+
+return_value=${result_array[$INPUT]}
+
+}
+
 domain_name=""
 dns_server=""
+vsphere_user="administrator@vsphere.local"
+vsphere_password=""
+vsphere_server=""
+vsphere_datacenter=""
+vsphere_cluster=""
+vsphere_datastore=""
+vsphere_dvs_switch=""
+vsphere_network=""
+vsphere_template=""
+vm_num_vcpu="4"
+vm_ram="8192"
 sw_version="7.0.1-6102"
 region_name="us-east-2"
 instance_type="c4.xlarge"
@@ -145,7 +209,7 @@ num_instances="3"
 gen_instances="1"
 start_num="1"
 gen_start_num="1"
-ssh_user="centos"
+ssh_user="admin"
 ssh_key=""
 ssh_private_key=""
 subnet_id=""
@@ -154,12 +218,6 @@ security_group_ids=""
 root_volume_iops="0"
 root_volume_size="50"
 root_volume_type="gp2"
-
-aws s3 ls >/dev/null 2>&1
-if [ $? -ne 0 ]; then
-   echo "Please refresh AWS credentials."
-   exit 1
-fi
 
 if [ ! -f variables.template ]; then
    echo "Please run the script from the directory with file variables.template."
@@ -188,43 +246,54 @@ echo -n "Configure variables? (y/n) [y]:"
 read INPUT
 if [ "$INPUT" == "y" -o -z "$INPUT" ]; then
 
-echo -n "host_name_prefix [$host_name_prefix]: "
-read INPUT
-if [ -n "$INPUT" ]; then
-   host_name_prefix=$INPUT
-fi
-
-echo -n "gen_name_prefix [$gen_name_prefix]: "
-read INPUT
-if [ -n "$INPUT" ]; then
-   gen_name_prefix=$INPUT
-fi
-
+echo "Domain Name:"
 get_domain_name domain_name
 
+echo "DNS Server:"
 get_dns_server dns_server
 
-echo -n "sw_version [$sw_version]: "
+[ -n "$domain_name" ] && vsphere_user="administrator@$domain_name"
+echo -n "vsphere_user [$vsphere_user]: "
 read INPUT
 if [ -n "$INPUT" ]; then
-   sw_version=$INPUT
-fi
-echo -n "region_name [$region_name]: "
-read INPUT
-if [ -n "$INPUT" ]; then
-   region_name=$INPUT
-fi
-echo -n "instance_type [$instance_type]: "
-read INPUT
-if [ -n "$INPUT" ]; then
-   instance_type=$INPUT
-fi
-echo -n "gen_instance_type [$gen_instance_type]: "
-read INPUT
-if [ -n "$INPUT" ]; then
-   gen_instance_type=$INPUT
+   vsphere_user=$INPUT
 fi
 
+echo -n "vsphere_password: "
+read -s INPUT
+echo ""
+if [ -n "$INPUT" ]; then
+   vsphere_password=$INPUT
+fi
+
+echo -n "vsphere_server: "
+read INPUT
+if [ -n "$INPUT" ]; then
+   vsphere_server=$INPUT
+fi
+
+echo "vSphere Datacenter:"
+list_dc vsphere_datacenter
+
+echo "vSphere Cluster:"
+list_cluster vsphere_cluster
+
+echo "vSphere Datastore:"
+list_datastore vsphere_datastore
+
+echo "vSphere DVSwitch:"
+list_dvs vsphere_dvs_switch
+
+echo "vSphere Port Group (network):"
+list_pg vsphere_network
+
+echo "VM Template:"
+list_template vsphere_template
+
+echo "Software version:"
+get_cb_version sw_version
+
+echo "Index storage option:"
 get_index_mem index_memory
 
 echo -n "num_instances [$num_instances]: "
@@ -232,83 +301,55 @@ read INPUT
 if [ -n "$INPUT" ]; then
    num_instances=$INPUT
 fi
+
 echo -n "gen_instances [$gen_instances]: "
 read INPUT
 if [ -n "$INPUT" ]; then
    gen_instances=$INPUT
 fi
-echo -n "start_num [$start_num]: "
-read INPUT
-if [ -n "$INPUT" ]; then
-   start_num=$INPUT
-fi
-echo -n "gen_start_num [$gen_start_num]: "
-read INPUT
-if [ -n "$INPUT" ]; then
-   gen_start_num=$INPUT
-fi
+
 echo -n "ssh_user [$ssh_user]: "
 read INPUT
 if [ -n "$INPUT" ]; then
    ssh_user=$INPUT
 fi
 
-echo "SSH Key:"
-list_ssh_keys ssh_key
-
 echo "SSH Private Key file:"
 list_priv_keys ssh_private_key
 
-echo "VPC ID:"
-list_vpc vpc_id
-
-echo "Subnet ID:"
-list_subnets subnet_id
-
-echo "Security Group ID:"
-list_sg security_group_ids
-
-echo -n "root_volume_iops [$root_volume_iops]: "
+echo -n "vm_num_vcpu [$vm_num_vcpu]: "
 read INPUT
 if [ -n "$INPUT" ]; then
-   root_volume_iops=$INPUT
+   vm_num_vcpu=$INPUT
 fi
 
-echo -n "root_volume_size [$root_volume_size]: "
+echo -n "vm_ram [$vm_ram]: "
 read INPUT
 if [ -n "$INPUT" ]; then
-   root_volume_size=$INPUT
-fi
-
-echo -n "root_volume_type [$root_volume_type]: "
-read INPUT
-if [ -n "$INPUT" ]; then
-   root_volume_size=$INPUT
+   vm_ram=$INPUT
 fi
 
 echo ""
-echo "host_name_prefix   : $host_name_prefix"
-echo "gen_name_prefix    : $gen_name_prefix"
+
 echo "domain_name        : $domain_name"
 echo "dns_server         : $dns_server"
+echo "vsphere_user       : $vsphere_user"
+echo "vsphere_password   : ********"
+echo "vsphere_server     : $vsphere_server"
+echo "vsphere_datacenter : $vsphere_datacenter"
+echo "vsphere_cluster    : $vsphere_cluster"
+echo "vsphere_datastore  : $vsphere_datastore"
+echo "vsphere_dvs_switch : $vsphere_dvs_switch"
+echo "vsphere_network    : $vsphere_network"
+echo "vsphere_template   : $vsphere_template"
 echo "sw_version         : $sw_version"
-echo "region_name        : $region_name"
-echo "instance_type      : $instance_type"
-echo "gen_instance_type  : $gen_instance_type"
 echo "index_memory       : $index_memory"
 echo "num_instances      : $num_instances"
 echo "gen_instances      : $gen_instances"
-echo "start_num          : $start_num"
-echo "gen_start_num      : $gen_start_num"
 echo "ssh_user           : $ssh_user"
-echo "ssh_key            : $ssh_key"
 echo "ssh_private_key    : $ssh_private_key"
-echo "subnet_id          : $subnet_id"
-echo "vpc_id             : $vpc_id"
-echo "security_group_ids : $security_group_ids"
-echo "root_volume_iops   : $root_volume_iops"
-echo "root_volume_size   : $root_volume_size"
-echo "root_volume_type   : $root_volume_type"
+echo "vm_num_vcpu        : $vm_num_vcpu"
+echo "vm_ram             : $vm_ram"
 echo ""
 echo -n "Write these to the variables file? [y/n]: "
 read INPUT
@@ -319,32 +360,32 @@ fi
 
 ssh_private_key=$(echo "$ssh_private_key" | sed -e 's/\//\\\//g')
 
-sed -e "s/\bHOST_NAME_PREFIX\b/$host_name_prefix/" \
-    -e "s/\bGEN_NAME_PREFIX\b/$gen_name_prefix/" \
-    -e "s/\bDOMAIN_NAME\b/$domain_name/" \
+sed -e "s/\bDOMAIN_NAME\b/$domain_name/" \
     -e "s/\bDNS_SERVER\b/$dns_server/" \
+    -e "s/\bVSPHERE_USER\b/$vsphere_user/" \
+    -e "s/\bVSPHERE_PASSWORD\b/$vsphere_password/" \
+    -e "s/\bVSPHERE_SERVER\b/$vsphere_server/" \
+    -e "s/\bVSPHERE_DATACENTER\b/$vsphere_datacenter/" \
+    -e "s/\bVSPHERE_CLUSTER\b/$vsphere_cluster/" \
+    -e "s/\bVSPHERE_DATASTORE\b/$vsphere_datastore/" \
+    -e "s/\bVSPHERE_DVS_SWITCH\b/$vsphere_dvs_switch/" \
+    -e "s/\bVSPHERE_NETWORK\b/$vsphere_network/" \
+    -e "s/\bVSPHERE_TEMPLATE\b/$vsphere_template/" \
     -e "s/\bSW_VERSION\b/$sw_version/" \
-    -e "s/\bREGION_NAME\b/$region_name/" \
-    -e "s/\bINSTANCE_TYPE\b/$instance_type/" \
-    -e "s/\bGEN_INSTANCE_TYPE\b/$gen_instance_type/" \
     -e "s/\bINDEX_MEMORY\b/$index_memory/" \
     -e "s/\bNUM_INSTANCES\b/$num_instances/" \
     -e "s/\bGEN_INSTANCES\b/$gen_instances/" \
-    -e "s/\bSTART_NUM\b/$start_num/" \
-    -e "s/\bGEN_START_NUM\b/$gen_start_num/" \
     -e "s/\bSSH_USER\b/$ssh_user/" \
-    -e "s/\bSSH_KEY\b/$ssh_key/" \
     -e "s/\bSSH_PRIVATE_KEY\b/$ssh_private_key/" \
-    -e "s/\bSUBNET_ID\b/$subnet_id/" \
-    -e "s/\bVPC_ID\b/$vpc_id/" \
-    -e "s/\bSECURITY_GROUP_IDS\b/$security_group_ids/" \
-    -e "s/\bROOT_VOLUME_IOPS\b/$root_volume_iops/" \
-    -e "s/\bROOT_VOLUME_SIZE\b/$root_volume_size/" \
-    -e "s/\bROOT_VOLUME_TYPE\b/$root_volume_type/" variables.template > variables.tf
+    -e "s/\bVM_NUM_VCPU\b/$vm_num_vcpu/" \
+    -e "s/\bVM_RAM\b/$vm_ram/" variables.template > variables.tf
 
 echo "File variables.tf written."
 fi
 
+echo -n "Configure nodes? (y/n) [y]:"
+read INPUT
+if [ "$INPUT" == "y" -o -z "$INPUT" ]; then
 echo ""
 echo "Configuring nodes."
 TMPFILE=$(mktemp)
@@ -352,7 +393,7 @@ TMPFILE=$(mktemp)
 cat <<EOF > $TMPFILE
 ##########################################################
 #
-# Default values for creating a Couchbase cluster on AWS.
+# Default values for creating a Couchbase cluster on VMware.
 #
 ##########################################################
 
@@ -365,10 +406,10 @@ EOF
 for i in $(seq $num_instances); do
   node_num_str=$(printf "%02d" $i)
   echo "=> Configuring instance $i ..."
-  echo -n "instance_type [$instance_type]: "
+  echo -n "template [$vsphere_template]: "
   read INPUT
   if [ -n "$INPUT" ]; then
-     instance_type=$INPUT
+     vsphere_template=$INPUT
   fi
   service_string=""
   list_item=1
@@ -393,10 +434,10 @@ for i in $(seq $num_instances); do
   done
 cat <<EOF >> $TMPFILE
     cbnode-$node_num_str = {
-      node_number     = $i,
-      node_services   = "${service_string}",
-      node_role       = "database"
-      instance_type   = "${instance_type}",
+      node_number      = $i,
+      node_services    = "${service_string}",
+      node_role        = "database"
+      vsphere_template = "${vsphere_template}",
     }
 EOF
 done
@@ -414,17 +455,17 @@ EOF
 for i in $(seq $gen_instances); do
   node_num_str=$(printf "%02d" $i)
   echo "=> Configuring generator $i ..."
-  echo -n "instance_type [$instance_type]: "
+  echo -n "template [$vsphere_template]: "
   read INPUT
   if [ -n "$INPUT" ]; then
-     instance_type=$INPUT
+     vsphere_template=$INPUT
   fi
 cat <<EOF >> $TMPFILE
     loadgen-$node_num_str = {
-      node_number     = $i,
-      node_services   = "docker",
-      node_role       = "generator"
-      instance_type   = "${instance_type}",
+      node_number      = $i,
+      node_services    = "docker",
+      node_role        = "generator"
+      vsphere_template = "${vsphere_template}",
     }
 EOF
 done
@@ -446,6 +487,7 @@ fi
 
 cp $TMPFILE cluster.tf
 echo "File cluster.tf written."
+fi
 
 rm $TMPFILE
 echo "Done."

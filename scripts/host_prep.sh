@@ -2,36 +2,22 @@
 
 VERSION=${1:-7.0.1-6102}
 
-echo "Creating admin user."
+INTERFACE_NAME=$(nmcli -t -f NAME c s --active | head -1)
 
-sudo groupadd -g 1001 admin
-sudo useradd -u 1001 -g admin admin
-sudo usermod -a -G wheel admin
-sudo sed -i -e 's/^# %wheel/%wheel/' /etc/sudoers
-sudo mkdir ~admin/.ssh
-sudo chown admin:admin ~admin/.ssh
-sudo chmod 700 ~admin/.ssh
-sudo cp ~/.ssh/authorized_keys ~admin/.ssh/authorized_keys
-sudo chmod 600 ~admin/.ssh/authorized_keys
-sudo chown admin:admin ~admin/.ssh/authorized_keys
+IP_ADDRESS=$(nmcli c s $INTERFACE_NAME | grep "IP4.ADDRESS" | awk '{print $2}' | sed -e 's/\/.*$//')
 
-echo "Setup DNS and Host Name."
-sudo nmcli c m System\ eth0 ipv4.ignore-auto-dns yes
-sudo nmcli c m System\ eth0 ipv4.dns "10.18.1.208,10.18.1.176"
-sudo nmcli c m System\ eth0 ipv4.dns-search "perflab.local"
-sudo nmcli connection up System\ eth0
+HOSTNAME=$(uname -n)
 
-sudo bash -c 'cat <<EOF > /etc/resolv.conf
-search perflab.local
-nameserver 10.18.1.208
-nameserver 10.18.1.176
-EOF'
-
-sudo hostnamectl set-hostname $HOSTNAME
-
-IP_ADDRESS=$(nmcli c s System\ eth0 | grep "IP4.ADDRESS" | awk '{print $2}' | sed -e 's/\/.*$//')
+sudo sh -c "sed -i -e \"/$HOSTNAME/d\" -e \"/^$/d\" /etc/hosts"
 
 sudo sh -c "echo \"$IP_ADDRESS $HOSTNAME\" >> /etc/hosts"
+
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+
+sudo yum install -y chrony
+sudo systemctl enable chronyd
+sudo systemctl start chronyd
 
 echo "Disabling THP."
 

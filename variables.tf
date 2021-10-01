@@ -4,21 +4,15 @@
 #
 ##########################################################
 
-variable "host_name_prefix" {
-  description = "Prefix for node names"
-  default     = "perfdb"
-  type        = string
-}
-
 variable "domain_name" {
   description = "Environment domain name"
-  default     = ""
+  default     = "unix.us.com"
   type        = string
 }
 
 variable "dns_server" {
   description = "Environment DNS server"
-  default     = ""
+  default     = "172.16.1.10"
   type        = string
 }
 
@@ -28,21 +22,58 @@ variable "sw_version" {
   type        = string
 }
 
-variable "region_name" {
-  description = "Region name"
-  default     = "us-east-2"
+variable "vsphere_user" {
+  default     = "administrator@unix.us.com"
   type        = string
 }
 
-variable "instance_type" {
-  description = "Instance type"
-  default     = "c4.xlarge"
+variable "vsphere_password" {
+  default     = "Passw0rd!"
   type        = string
 }
 
-variable "gen_instance_type" {
-  description = "Generator node instance type"
-  default     = "c4.xlarge"
+variable "vsphere_server" {
+  default     = "172.16.1.19"
+  type        = string
+}
+
+variable "vsphere_datacenter" {
+  default     = "HomeLab"
+  type        = string
+}
+
+variable "vsphere_cluster" {
+  default     = "HomeLab"
+  type        = string
+}
+
+variable "vsphere_datastore" {
+  default     = "vsanDatastore"
+  type        = string
+}
+
+variable "vsphere_dvs_switch" {
+  default     = "DSwitch-10GbE"
+  type        = string
+}
+
+variable "vsphere_network" {
+  default     = "lab-vpc-02"
+  type        = string
+}
+
+variable "vsphere_template" {
+  default     = "CentOS-7-Template"
+  type        = string
+}
+
+variable "vm_num_vcpu" {
+  default     = "4"
+  type        = string
+}
+
+variable "vm_ram" {
+  default     = "8192"
   type        = string
 }
 
@@ -64,68 +95,15 @@ variable "gen_instances" {
   type        = string
 }
 
-variable "start_num" {
-  description = "Starting host number for instances in the cluster"
-  default     = "1"
-  type        = string
-}
-
-variable "gen_start_num" {
-  description = "Starting host number for generator nodes"
-  default     = "1"
-  type        = string
-}
-
 variable "ssh_user" {
-  description = "The default username for the AMI"
+  description = "The default username for setup"
   type        = string
-  default     = "centos"
-}
-
-variable "ssh_key" {
-  description = "Key name to use"
-  default     = ""
-  type        = string
+  default     = "admin"
 }
 
 variable "ssh_private_key" {
   description = "The private key to use when connecting to the instances"
-  default     = ""
+  default     = "/home/admin/.ssh/homelab-default-key"
   type        = string
 }
 
-variable "subnet_id" {
-  description = "Subnet to launch the instances in"
-  default     = ""
-  type        = string
-}
-
-variable "vpc_id" {
-  description = "VPC Id"
-  default     = ""
-  type        = string
-}
-
-variable "security_group_ids" {
-  description = "Security group to assign to the instances"
-  default     = [""]
-  type        = list(string)
-}
-
-variable "root_volume_iops" {
-  description = "IOPS (only for io1 volume type)"
-  default     = "0"
-  type        = string
-}
-
-variable "root_volume_size" {
-  description = "The root volume size"
-  default     = "50"
-  type        = string
-}
-
-variable "root_volume_type" {
-  description = "The root volume type"
-  default     = "gp2"
-  type        = string
-}

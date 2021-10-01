@@ -2,34 +2,38 @@ output lab-id {
     value = "lab-${random_id.labid.hex}"
 }
 
-output "db-node-ips" {
+output "hostnames_db" {
   value = [
-    for instance in aws_instance.couchbase_nodes:
-    instance.public_ip
+    for instance in vsphere_virtual_machine.couchbase_nodes:
+    instance.name
   ]
 }
 
-output "gen-node-ips" {
+output "hostnames_gen" {
   value = [
-    for instance in aws_instance.generator_nodes:
-    instance.public_ip
+    for instance in vsphere_virtual_machine.generator_nodes:
+    instance.name
   ]
 }
 
-output "db-node-names" {
+output "service_list" {
   value = [
-    for instance in aws_instance.couchbase_nodes:
-    lookup(instance.tags, "Name")
+    for tag in vsphere_tag.services:
+    "${tag.name}:${tag.description}"
   ]
 }
 
-output "gen-node-names" {
+output "inventory_db" {
   value = [
-    for instance in aws_instance.generator_nodes:
-    lookup(instance.tags, "Name")
+    for instance in vsphere_virtual_machine.couchbase_nodes:
+    instance.default_ip_address
   ]
 }
 
-output "load-balancer-name" {
-  value = aws_lb.load_balancer.dns_name
+output "inventory_gen" {
+  value = [
+    for instance in vsphere_virtual_machine.generator_nodes:
+    instance.default_ip_address
+  ]
 }
+

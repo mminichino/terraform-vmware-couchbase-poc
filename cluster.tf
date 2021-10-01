@@ -8,23 +8,23 @@ variable "cluster_spec" {
   description = "Map of cluster nodes and services."
   type        = map
   default     = {
-    cbnode = {
-      node_number     = 1,
-      node_services   = "data,index,query",
-      node_role       = "database"
-      instance_type   = "c4.xlarge",
-    },
-    cbnode = {
-      node_number     = 2,
-      node_services   = "data,index,query",
-      node_role       = "database"
-      instance_type   = "c4.xlarge",
+    cbnode-01 = {
+      node_number      = 1,
+      node_services    = "data,index,query",
+      node_role        = "database"
+      vsphere_template = "CentOS-7-Template",
     }
-    cbnode = {
-      node_number     = 3,
-      node_services   = "data,index,query",
-      node_role       = "database"
-      instance_type   = "c4.xlarge",
+    cbnode-02 = {
+      node_number      = 2,
+      node_services    = "data,index,query",
+      node_role        = "database"
+      vsphere_template = "CentOS-7-Template",
+    }
+    cbnode-03 = {
+      node_number      = 3,
+      node_services    = "data,index,query",
+      node_role        = "database"
+      vsphere_template = "CentOS-7-Template",
     }
   }
 }
@@ -33,11 +33,11 @@ variable "generator_spec" {
   description = "Map of cluster nodes and services."
   type        = map
   default     = {
-    loadgen = {
-      node_number     = 1,
-      node_services   = "docker",
-      node_role       = "generator"
-      instance_type   = "c4.xlarge",
+    loadgen-01 = {
+      node_number      = 1,
+      node_services    = "docker",
+      node_role        = "generator"
+      vsphere_template = "CentOS-7-Template",
     }
   }
 }

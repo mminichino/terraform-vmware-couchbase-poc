@@ -4,12 +4,6 @@
 #
 ##########################################################
 
-variable "host_name_prefix" {
-  description = "Prefix for node names"
-  default     = "HOST_NAME_PREFIX"
-  type        = string
-}
-
 variable "domain_name" {
   description = "Environment domain name"
   default     = "DOMAIN_NAME"
@@ -28,21 +22,58 @@ variable "sw_version" {
   type        = string
 }
 
-variable "region_name" {
-  description = "Region name"
-  default     = "REGION_NAME"
+variable "vsphere_user" {
+  default     = "VSPHERE_USER"
   type        = string
 }
 
-variable "instance_type" {
-  description = "Instance type"
-  default     = "INSTANCE_TYPE"
+variable "vsphere_password" {
+  default     = "VSPHERE_PASSWORD"
   type        = string
 }
 
-variable "gen_instance_type" {
-  description = "Generator node instance type"
-  default     = "GEN_INSTANCE_TYPE"
+variable "vsphere_server" {
+  default     = "VSPHERE_SERVER"
+  type        = string
+}
+
+variable "vsphere_datacenter" {
+  default     = "VSPHERE_DATACENTER"
+  type        = string
+}
+
+variable "vsphere_cluster" {
+  default     = "VSPHERE_CLUSTER"
+  type        = string
+}
+
+variable "vsphere_datastore" {
+  default     = "VSPHERE_DATASTORE"
+  type        = string
+}
+
+variable "vsphere_dvs_switch" {
+  default     = "VSPHERE_DVS_SWITCH"
+  type        = string
+}
+
+variable "vsphere_network" {
+  default     = "VSPHERE_NETWORK"
+  type        = string
+}
+
+variable "vsphere_template" {
+  default     = "VSPHERE_TEMPLATE"
+  type        = string
+}
+
+variable "vm_num_vcpu" {
+  default     = "VM_NUM_VCPU"
+  type        = string
+}
+
+variable "vm_ram" {
+  default     = "VM_RAM"
   type        = string
 }
 
@@ -64,28 +95,10 @@ variable "gen_instances" {
   type        = string
 }
 
-variable "start_num" {
-  description = "Starting host number for instances in the cluster"
-  default     = "START_NUM"
-  type        = string
-}
-
-variable "gen_start_num" {
-  description = "Starting host number for generator nodes"
-  default     = "GEN_START_NUM"
-  type        = string
-}
-
 variable "ssh_user" {
-  description = "The default username for the AMI"
+  description = "The default username for setup"
   type        = string
   default     = "SSH_USER"
-}
-
-variable "ssh_key" {
-  description = "Key name to use"
-  default     = "SSH_KEY"
-  type        = string
 }
 
 variable "ssh_private_key" {
@@ -94,38 +107,3 @@ variable "ssh_private_key" {
   type        = string
 }
 
-variable "subnet_id" {
-  description = "Subnet to launch the instances in"
-  default     = "SUBNET_ID"
-  type        = string
-}
-
-variable "vpc_id" {
-  description = "VPC Id"
-  default     = "VPC_ID"
-  type        = string
-}
-
-variable "security_group_ids" {
-  description = "Security group to assign to the instances"
-  default     = ["SECURITY_GROUP_IDS"]
-  type        = list(string)
-}
-
-variable "root_volume_iops" {
-  description = "IOPS (only for io1 volume type)"
-  default     = "ROOT_VOLUME_IOPS"
-  type        = string
-}
-
-variable "root_volume_size" {
-  description = "The root volume size"
-  default     = "ROOT_VOLUME_SIZE"
-  type        = string
-}
-
-variable "root_volume_type" {
-  description = "The root volume type"
-  default     = "ROOT_VOLUME_TYPE"
-  type        = string
-}
