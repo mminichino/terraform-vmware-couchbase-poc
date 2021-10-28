@@ -117,8 +117,8 @@ resource "vsphere_virtual_machine" "couchbase_nodes" {
   tags = ["${vsphere_tag.role[each.key].id}","${vsphere_tag.services[each.key].id}"]
 
   provisioner "file" {
-    source      = "${path.module}/scripts/host_prep.sh"
-    destination = "/home/${var.ssh_user}/host_prep.sh"
+    source      = "${path.module}/scripts/callhostprep.sh"
+    destination = "/home/${var.ssh_user}/callhostprep.sh -t cbnode -h ${each.key}-${random_id.labid.hex} -d ${var.domain_name} -n ${var.dns_server} -v ${var.sw_version}"
     connection {
       host        = self.default_ip_address
       type        = "ssh"
@@ -175,8 +175,8 @@ resource "vsphere_virtual_machine" "generator_nodes" {
   }
 
   provisioner "file" {
-    source      = "${path.module}/scripts/gen_host_prep.sh"
-    destination = "/home/${var.ssh_user}/gen_host_prep.sh"
+    source      = "${path.module}/scripts/callhostprep.sh"
+    destination = "/home/${var.ssh_user}/callhostprep.sh -t generic -h ${each.key}-${random_id.labid.hex} -d ${var.domain_name} -n ${var.dns_server}"
     connection {
       host        = self.default_ip_address
       type        = "ssh"
