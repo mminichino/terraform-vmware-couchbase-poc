@@ -224,7 +224,7 @@ resource "null_resource" "couchbase-init" {
     gen_nodes = join(",", keys(vsphere_virtual_machine.generator_nodes))
   }
   provisioner "local-exec" {
-    command = "ansible-helper.py couchbase-init.yaml -S -h inventory_tf.py --cloud vmware"
+    command = "ansible-helper.py couchbase-init.yaml -S -h inventory_tf.py --cloud vmware --memopt ${var.index_memory} --domain ${var.domain_name}"
     environment = {
        TERRAFORM_PATH = "${path.module}"
     }
