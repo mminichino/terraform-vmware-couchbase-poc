@@ -5,14 +5,14 @@ output lab-id {
 output "hostnames_db" {
   value = [
     for instance in vsphere_virtual_machine.couchbase_nodes:
-    instance.name
+    "${instance.name}.${var.domain_name}"
   ]
 }
 
 output "hostnames_gen" {
   value = [
     for instance in vsphere_virtual_machine.generator_nodes:
-    instance.name
+    "${instance.name}.${var.domain_name}"
   ]
 }
 
