@@ -205,8 +205,12 @@ resource "time_sleep" "wait_10_seconds" {
 }
 
 resource "null_resource" "prep-hosts" {
+  triggers = {
+    cb_nodes = join(",", keys(vsphere_virtual_machine.couchbase_nodes))
+    gen_nodes = join(",", keys(vsphere_virtual_machine.generator_nodes))
+  }
   provisioner "local-exec" {
-    command = "ansible-helper.py host-add-dns.yaml -S -h inventory_tf.py --dnsserver ${var.dns_server}"
+    command = "ansible-helper.py host-add-dns.yaml -S -h inventory_tf.py --dnsserver ${var.dns_server} --domain ${var.domain_name}"
     environment = {
        TERRAFORM_PATH = "${path.module}"
     }
@@ -215,6 +219,10 @@ resource "null_resource" "prep-hosts" {
 }
 
 resource "null_resource" "couchbase-init" {
+  triggers = {
+    cb_nodes = join(",", keys(vsphere_virtual_machine.couchbase_nodes))
+    gen_nodes = join(",", keys(vsphere_virtual_machine.generator_nodes))
+  }
   provisioner "local-exec" {
     command = "ansible-helper.py couchbase-init.yaml -S -h inventory_tf.py --cloud vmware"
     environment = {
