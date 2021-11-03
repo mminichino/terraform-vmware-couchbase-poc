@@ -19,7 +19,7 @@ output "hostnames_gen" {
 output "service_list" {
   value = [
     for tag in vsphere_tag.services:
-    "${tag.name}:${tag.description}"
+    "${tag.name}.${var.domain_name}:${tag.description}"
   ]
 }
 
